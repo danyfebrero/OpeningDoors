@@ -6,9 +6,11 @@ Created on Sun Oct 23 16:12:16 2022
 @author: Daniel Jimenez
 """
 
+# working with files
 import os
 from os.path import exists
 from os import path
+#working with dotenv
 from dotenv import load_dotenv
 from dotenv import set_key
 
@@ -26,8 +28,24 @@ def create_key(key_input):
         Does: creates a file with the api key from the user input
     """
     set_key('.env','API_KEY',key_input)
+    set_key('.env','Request_Counter',0)
     update_env()
-    
+
+def get_request_counter():
+    if key_exist():
+        os.getenv('Request_Counter')
+
+def reset_request_counter():
+    if key_exist():
+        set_key('.env','Request_Counter',0)
+        update_env()
+
+def increase_request_counter():
+    if key_exist():
+        counter = int(get_request_counter())
+        counter += 1
+        set_key('.env','Request_Counter',counter)
+        update_env()
 
 def get_key():
     """ 

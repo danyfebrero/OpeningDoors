@@ -5,8 +5,15 @@ Created on Fri Oct 21 23:22:00 2022
 
 @author: Daniel Jimenez
 """
-
+# API post/get
 import requests
+from api_key import increase_request_counter
+# data manipulation
+import json
+import pandas as pd
+import numpy as np
+
+
 
 from api_key import get_key
 
@@ -53,6 +60,12 @@ def create_url(endpoint, address, city, state, zipcode):
     request_url = f'"GET", {url}, headers={headers}, params={querystring}'
     #response = requests.request("GET", url, headers=headers, params=querystring)
     return request_url
+
+def api_request(request_url):
+    with requests.request(request_url) as session:
+        data = session.text
+        increase_request_counter()
+    return data
 
 if __name__ == "__main__":
     print(create_url("properties", "5500 Grand Lake Dr", "San Antonio", "TX", 78244))
