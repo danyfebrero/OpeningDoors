@@ -10,6 +10,9 @@ This project will allow the user to search your home value, and analyze selling 
 ## Requirements:
 
   * Python 3.9
+  * python-dotenv
+  * os
+  * requests
   * Streamlit
   * Pandas
   * Realty Mole Property API key (gives 50 Requests per month in the free suscription)
