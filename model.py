@@ -6,27 +6,20 @@ Created on Fri Oct 21 23:22:00 2022
 @author: Daniel Jimenez
 """
 # API post/get
+from turtle import position
 import requests
-from api_key import increase_request_counter
+
 # data manipulation
 import json
 import pandas as pd
 import numpy as np
 
-
-
 from api_key import get_key
+from api_key import increase_request_counter
 
 
-def main():
-    """ 
-        Does: xxx
-        Arguments explanation: xxx
-        Return: xxx
-    """
-    pass
-
-def create_url(endpoint, address, city, state, zipcode):
+def create_url(endpoint, address, city, state, zipcode, squareFootage=None, 
+                bathrooms=None, bedrooms=None, propertyType=None, compCount=5, limit=None):
     """
         Does: takes a full address and makes a resquest url\n
         Arguments:\n
@@ -48,25 +41,59 @@ def create_url(endpoint, address, city, state, zipcode):
     if endpoint == 'properties':
         querystring = {'address':f'{address}, {city}, {state}, {zipcode}'}
     elif endpoint == 'salePrice' or endpoint == 'rentalPrice':
-        querystring = {'address':f'{address}, {city}, {state}, {zipcode}',"propertyType":{}, "bedrooms":{},"bathrooms":{},"squareFootage":{},"daysOld":{},"compCount":{}}
+        querystring = {'address':f'{address}, {city}, {state}, {zipcode}',"propertyType":{propertyType}, "bedrooms":{bedrooms},"bathrooms":{bathrooms},"squareFootage":{squareFootage},"daysOld":{},"compCount":{compCount}}
     elif endpoint == 'saleListings' or endpoint == 'rentalListings':
-        querystring = {"city":{city},"state":{state},"limit":{}}
+        querystring = {"city":{city},"state":{state},"limit":{limit}}
 
     headers = {
 	    "X-RapidAPI-Key": get_key(),
 	    "X-RapidAPI-Host": "realty-mole-property-api.p.rapidapi.com"
         }
-
-    request_url = f'"GET", {url}, headers={headers}, params={querystring}'
-    #response = requests.request("GET", url, headers=headers, params=querystring)
+    request_url = {'method':'GET', 'url':url, 'headers':headers,'params':querystring}
     return request_url
 
-def api_request(request_url):
-    with requests.request(request_url) as session:
-        data = session.text
+def api_request(url):
+    try:
+        response = requests.request(url["method"], url["url"], headers=url["headers"], params=url["params"])
+        response.raise_for_status()
+        # Code here will only run if the request is successful
         increase_request_counter()
+        return response
+    except requests.exceptions.HTTPError as errh:
+        print(errh)
+    except requests.exceptions.ConnectionError as errc:
+        print(errc)
+    except requests.exceptions.Timeout as errt:
+        print(errt)
+    except requests.exceptions.RequestException as err:
+        print(err)
+
+def save_data(response):
+    with open('sample.json', "wb") as file:
+        file.write(response)
+
+def load_comps():
+    with open('sample.json','r') as file:
+        data = json.load(file) 
     return data
 
-if __name__ == "__main__":
-    print(create_url("properties", "5500 Grand Lake Dr", "San Antonio", "TX", 78244))
+def main(option):
+    """ 
+        Does: xxx
+        Arguments explanation: xxx
+        Return: xxx
+    """
+    if option == 'save':
+        url = create_url("salePrice", "5500 Grand Lake Dr", "San Antonio", "TX", 78244)
+        response = api_request(url)
+        save_data(response.content)
+        df_realty_comps = pd.DataFrame(response.json()['listings'])
+    elif option == 'load':
+        data = load_comps()
+        df_realty_comps = pd.DataFrame(data['listings'])
+        print(df_realty_comps)
     
+    
+
+if __name__ == "__main__":
+    main('load')

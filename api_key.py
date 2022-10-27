@@ -28,23 +28,25 @@ def create_key(key_input):
         Does: creates a file with the api key from the user input
     """
     set_key('.env','API_KEY',key_input)
-    set_key('.env','Request_Counter',0)
+    set_key('.env','Request_Counter',str(0))
     update_env()
 
 def get_request_counter():
     if key_exist():
-        os.getenv('Request_Counter')
+        update_env()
+        counter = os.getenv('Request_Counter')
+    return counter
 
 def reset_request_counter():
     if key_exist():
-        set_key('.env','Request_Counter',0)
+        set_key('.env','Request_Counter',str(0))
         update_env()
 
 def increase_request_counter():
     if key_exist():
         counter = int(get_request_counter())
         counter += 1
-        set_key('.env','Request_Counter',counter)
+        set_key('.env','Request_Counter',str(counter))
         update_env()
 
 def get_key():
@@ -62,3 +64,4 @@ def get_key():
 
 if __name__ == "__main__":
     get_key()
+    print(get_request_counter())
