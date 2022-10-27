@@ -13,6 +13,7 @@ This project will allow the user to search your home value, and analyze selling 
   * python-dotenv
   * os
   * requests
+  * plotly_express
   * Streamlit
   * Pandas
   * Realty Mole Property API key (gives 50 Requests per month in the free suscription)

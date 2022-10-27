@@ -6,14 +6,18 @@ Created on Fri Oct 21 23:22:00 2022
 @author: Daniel Jimenez
 """
 # API post/get
-from turtle import position
 import requests
+
+# plotting
+import plotly.express as px
 
 # data manipulation
 import json
 import pandas as pd
 import numpy as np
 
+
+# dotenv handling
 from api_key import get_key
 from api_key import increase_request_counter
 
@@ -60,22 +64,37 @@ def api_request(url):
         increase_request_counter()
         return response
     except requests.exceptions.HTTPError as errh:
-        print(errh)
+        return errh
     except requests.exceptions.ConnectionError as errc:
-        print(errc)
+        return errh
     except requests.exceptions.Timeout as errt:
-        print(errt)
+        return errh
     except requests.exceptions.RequestException as err:
-        print(err)
+        return errh
 
-def save_data(response):
-    with open('sample.json', "wb") as file:
-        file.write(response)
+def save_data(data):
+    with open('sample.json', "w") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
 
 def load_comps():
     with open('sample.json','r') as file:
         data = json.load(file) 
     return data
+
+def map_plot(df, street):
+    fig = px.scatter_mapbox(df, 
+                        lat="latitude", 
+                        lon="longitude",     
+                        color="address", 
+                        color_continuous_scale=px.colors.cyclical.IceFire, 
+                        size="correlation",
+                        size_max=30, 
+                        zoom=15,
+                        hover_name="address",
+                        hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"],
+                        title="Comparables for {0}".format(street))
+    fig.update_layout(mapbox_style="open-street-map")                    
+    fig.show()
 
 def main(option):
     """ 
@@ -84,16 +103,17 @@ def main(option):
         Return: xxx
     """
     if option == 'save':
-        url = create_url("salePrice", "5500 Grand Lake Dr", "San Antonio", "TX", 78244)
+        address = {"address" : "5500 Grand Lake Dr", "city" : "San Antonio", "state" : "TX", "zipcode" : 78244}
+        url = create_url("salePrice", address['address'], address['city'], address['state'], address['zipcode'])
         response = api_request(url)
-        save_data(response.content)
-        df_realty_comps = pd.DataFrame(response.json()['listings'])
+        data = json.loads(response.text)
+        data['address'] = address
+        save_data(data)
     elif option == 'load':
         data = load_comps()
-        df_realty_comps = pd.DataFrame(data['listings'])
-        print(df_realty_comps)
+    df_realty_comps = pd.DataFrame(data['listings'])
+    map_plot(df_realty_comps, data['address']['address'])
     
     
-
 if __name__ == "__main__":
     main('load')
