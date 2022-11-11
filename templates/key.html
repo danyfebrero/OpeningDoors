@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Opening Doors{% endblock %}
+
+{% block content %}
+{% if key_exist == "True" %}
+    <div class="six columns">
+        <p>
+        You already have an Realty Mole Property API key. You can use a new one by submitting the key.
+        </p>
+    </div>
+    
+{% else %}
+    <div class="six columns">
+        <p>This application use the Realty Mole Property API, 
+            which provides on-demand access to 140+ million property records,
+            owner details, home value and rent estimates, 
+            comparable properties, active sale and rental 
+            listings, as well as aggregate real estate market 
+            data."
+        </p>
+        <p>
+            They offer a free API plan which includes up to 50 free 
+            API calls per month, so you can test the API and 
+            develop your integration without costly upfront 
+            commitments or long-term contracts.
+        </p>
+        <p>
+            <em><a href="https://rapidapi.com/realtymole/api/realty-mole-property-api/pricing">Get your free API key </a></em>
+            and start exploring by submitting your key.
+        </p>
+        
+    </div>
+{% endif %}
+<div class="six columns">
+    <form method="post" action="">
+        <input class="u-full-width" type="text" name="key" placeholder="API Key"><br>
+        <button class="button-primary u-full-width" type="submit">Submit</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -6,6 +6,7 @@ Created on Fri Oct 21 23:22:00 2022
 @author: Daniel Jimenez
 """
 # API post/get
+from datetime import datetime
 import requests
 
 # plotting
@@ -13,17 +14,17 @@ import plotly.express as px
 
 # data manipulation
 import json
-import pandas as pd
-import numpy as np
-
 
 # dotenv handling
 from api_key import get_key
 from api_key import increase_request_counter
 
+#others
+from datetime import datetime
+
 
 def create_url(endpoint, address, city, state, zipcode, squareFootage=None, 
-                bathrooms=None, bedrooms=None, propertyType=None, compCount=5, limit=None):
+                bathrooms=None, bedrooms=None, propertyType=None, compCount=None, limit=None):
     """
         Does: takes a full address and makes a resquest url\n
         Arguments:\n
@@ -36,33 +37,31 @@ def create_url(endpoint, address, city, state, zipcode, squareFootage=None,
         Return: resquest url based in the desired endpoint
     """
     url = f"https://realty-mole-property-api.p.rapidapi.com/{endpoint}"
-
-    # parameters for value estimate and rent estimate
-    # "propertyType":"Single Family","bedrooms":"4","bathrooms":"2","squareFootage":"1600","compCount":"5"
-    # parameters for sale listing and rental listing
-    # "city":"Austin","state":"TX","limit":"10"
-
-    if endpoint == 'properties':
-        querystring = {'address':f'{address}, {city}, {state}, {zipcode}'}
-    elif endpoint == 'salePrice' or endpoint == 'rentalPrice':
-        querystring = {'address':f'{address}, {city}, {state}, {zipcode}',"propertyType":{propertyType}, "bedrooms":{bedrooms},"bathrooms":{bathrooms},"squareFootage":{squareFootage},"daysOld":{},"compCount":{compCount}}
-    elif endpoint == 'saleListings' or endpoint == 'rentalListings':
-        querystring = {"city":{city},"state":{state},"limit":{limit}}
-
     headers = {
 	    "X-RapidAPI-Key": get_key(),
 	    "X-RapidAPI-Host": "realty-mole-property-api.p.rapidapi.com"
         }
+    if endpoint == 'properties':
+        querystring = {'address':f'{address}, {city}, {state}, {zipcode}'}
+    elif endpoint == 'salePrice' or endpoint == 'rentalPrice':
+        querystring = {'address':f'{address}, {city}, {state}, {zipcode}'}
+    elif endpoint == 'saleListings' or endpoint == 'rentalListings':
+        querystring = {'city':{city},'state':{state}}
+
     request_url = {'method':'GET', 'url':url, 'headers':headers,'params':querystring}
+
     return request_url
 
 def api_request(url):
+    """ 
+        Does: does de request to the API \n
+        Arguments: url is a list\n
+        Return: the response or the error\n
+    """
     try:
         response = requests.request(url["method"], url["url"], headers=url["headers"], params=url["params"])
         response.raise_for_status()
-        # Code here will only run if the request is successful
         increase_request_counter()
-        return response
     except requests.exceptions.HTTPError as errh:
         return errh
     except requests.exceptions.ConnectionError as errc:
@@ -71,49 +70,48 @@ def api_request(url):
         return errh
     except requests.exceptions.RequestException as err:
         return errh
+    return response
 
-def save_data(data):
-    with open('sample.json', "w") as file:
+def save_data(data, filename):
+    """ 
+        Does: save all the data obtained from the API to a json file\n
+        Arguments: \n
+            data: is the list of dictionaries obtained from the API\n
+            filename: the name and extension to export the file\n
+    """
+    with open(filename, "w") as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
 
-def load_comps():
-    with open('sample.json','r') as file:
+def load_local_data(filename):
+    """ 
+        Does: loads the data saved from the API to a json file\n
+        Arguments: \n
+            filename: the name and extension to of the file to load\n
+        Returns: a the dictionaries obtained from the file\n
+    """
+    with open(filename,'r') as file:
         data = json.load(file) 
     return data
 
-def map_plot(df, street):
-    fig = px.scatter_mapbox(df, 
-                        lat="latitude", 
-                        lon="longitude",     
-                        color="address", 
-                        color_continuous_scale=px.colors.cyclical.IceFire, 
-                        size="correlation",
-                        size_max=30, 
-                        zoom=15,
-                        hover_name="address",
-                        hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"],
-                        title="Comparables for {0}".format(street))
-    fig.update_layout(mapbox_style="open-street-map")                    
-    fig.show()
-
-def main(option):
+def get_api_data(address, endpoints):
     """ 
-        Does: xxx
-        Arguments explanation: xxx
-        Return: xxx
+        Does: gets all the data from the api\n
+        Arguments: 
+            address = {"address" : "string", "city" : "string", "state" : "string", "zipcode" : integer}\n
+            endpoints = a list of the endpoits needed\n
+            Available Endpoints: 'properties', 'salePrice', 'rentalPrice', 'saleListings','rentalListings'\n       
+        Returns: all the data obtained from the api in a dictionary with the same name as the endpoint
     """
-    if option == 'save':
-        address = {"address" : "5500 Grand Lake Dr", "city" : "San Antonio", "state" : "TX", "zipcode" : 78244}
-        url = create_url("salePrice", address['address'], address['city'], address['state'], address['zipcode'])
+    data = {}
+    
+    for endpoint in endpoints:
+        url = create_url(endpoint, address['address'], address['city'], address['state'], address['zipcode'])
         response = api_request(url)
-        data = json.loads(response.text)
-        data['address'] = address
-        save_data(data)
-    elif option == 'load':
-        data = load_comps()
-    df_realty_comps = pd.DataFrame(data['listings'])
-    map_plot(df_realty_comps, data['address']['address'])
-    
-    
-if __name__ == "__main__":
-    main('load')
+        if not endpoint == 'properties':
+            data[endpoint] = json.loads(response.text)
+        else:
+             temp = json.loads(response.text)
+             data[endpoint] = temp[0]
+        data['last_request'] = {'date_time':str(datetime.now())}
+        save_data(data, 'home.json')
+    return data

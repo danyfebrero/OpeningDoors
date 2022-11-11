@@ -23,7 +23,7 @@ def key_exist():
     """
     return exists (".env") and path.getsize(".env") != 0
 
-def create_key(key_input):
+def save_key(key_input):
     """ 
         Does: creates a file with the api key from the user input
     """
@@ -58,7 +58,7 @@ def get_key():
         key_input = input("Please introduce your Realty Mole API key (if you don't have a key please create one for free at https://rapidapi.com/realtymole/api/realty-mole-property-api: ")
         if len(key_input) == 0:
             continue
-        create_key(key_input)
+        save_key(key_input)
     update_env()
     return os.getenv('API_KEY')
 
