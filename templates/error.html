@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Opening Doors{% endblock %}
+
+{% block content %}
+
+{% if invalid_address == "True" %}
+    <p>
+        <br>
+        Realty Mole doesn't have information for this property, <a href="{{ url_for('index') }}">please try with another one.</a> 
+    </p>
+{% else %}
+    <p>
+        <br>
+        The API request has a problem <br> Please try again later or if you would like to target a larger API call volume, please visit <a href="https://www.realtymole.com/api">the API membership pricing.</a> 
+    </p>
+{% endif %}
+
+{% endblock %}

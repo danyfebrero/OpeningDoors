@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Opening Doors{% endblock %}
+
+{% block content %}
+        <div class="search">
+                <form method="post">
+                        <div class="user_input">
+                                <div class="nine columns">
+                                        <input class="u-full-width" type="text" id="searchBar" name="address_input" placeholder="Type your address here">
+                                </div>
+                                <div class="three columns">
+                                        <button class="button-primary u-full-width" type="submit">Search</button>
+                                </div>
+                        </div>
+                </form>
+        </div>
+        <div class="row" id="property-details">
+                <div class="eight columns"><h4>{{property_data.addressLine1}}</h4><p>{{property_data.city}}, {{property_data.state}} {{property_data.zipCode}}</p></div>
+                <div class="four  columns"></div>
+        </div>
+        <div class="row" id="property-details">
+                <div class="eight columns"></div>
+                <div class="four  columns"></div>
+        </div>
+        <div class="row" id="property-details">
+                <div class="eight columns">{{property_data.bedrooms}} Beds  {{property_data.bathrooms}} Baths  {{property_data.squareFootage}} sqft</div>
+                <div class="four  columns"></div>
+        </div>
+        <div class="Property-Map">
+
+        </div>
+        <div class="Home-Details">
+
+        </div>
+        <div class="Tax-TaxAssessment">
+
+        </div>
+        <div class="Comparables">
+                <div class="map"></div>
+                <div class="comparable-list"></div>
+        </div>
+{% endblock %}
+{% block chart %}
+{% endblock %}

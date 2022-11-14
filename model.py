@@ -58,6 +58,7 @@ def api_request(url):
         Arguments: url is a list\n
         Return: the response or the error\n
     """
+    #refactor this code
     try:
         response = requests.request(url["method"], url["url"], headers=url["headers"], params=url["params"])
         response.raise_for_status()
@@ -94,7 +95,7 @@ def load_local_data(filename):
     return data
 
 def get_api_data(address, endpoints):
-    """ 
+    """
         Does: gets all the data from the api\n
         Arguments: 
             address = {"address" : "string", "city" : "string", "state" : "string", "zipcode" : integer}\n
@@ -102,8 +103,8 @@ def get_api_data(address, endpoints):
             Available Endpoints: 'properties', 'salePrice', 'rentalPrice', 'saleListings','rentalListings'\n       
         Returns: all the data obtained from the api in a dictionary with the same name as the endpoint
     """
+    #refactor this code
     data = {}
-    
     for endpoint in endpoints:
         url = create_url(endpoint, address['address'], address['city'], address['state'], address['zipcode'])
         response = api_request(url)
@@ -115,3 +116,131 @@ def get_api_data(address, endpoints):
         data['last_request'] = {'date_time':str(datetime.now())}
         save_data(data, 'home.json')
     return data
+
+def get_data(location, address, endpoints):
+    """
+        Does:
+        Arguments:
+        Returns:
+    """
+    if location == 'api':
+        if len(address) == 0:
+            address = {"address" : "5500 Grand Lake Dr", "city" : "San Antonio", "state" : "TX", "zipcode" : 78244}
+        if len(endpoints) == 0:
+            endpoints = ['properties', 'salePrice']
+        data = get_api_data(address, endpoints)
+    else:
+        data = load_local_data('home.json')
+    #map_plot(df_sale_comps, street)
+    #scatter_plot(df_sale_comps, street)
+    return data
+
+def process_data(location, address, endpoints):
+    """
+        returns: last_request, property_data, property_comps, property_rent
+    """
+    data = get_data(location, address, endpoints)
+    endpoints = []
+    address = {}
+    location = 'local'
+    data = get_data(location, address, endpoints)
+
+    endpoints = list(data.keys())
+    last_request = ''
+    property_data = {}
+    property_comps = {}
+    property_rent = {}
+
+    if "properties" in endpoints:
+        last_request = data['last_request']['date_time']
+        property_data = data['properties']
+
+        #property_tax_assessment = pd.DataFrame.from_dict(property_data["taxAssessment"],orient='index',)
+        #property_tax_assessment.reset_index(inplace=True)
+        #property_tax_assessment.rename(columns = {'index':'year'})
+
+        #property_taxes = pd.DataFrame.from_dict(property_data["propertyTaxes"],orient='index')
+        #property_taxes.reset_index(inplace=True)
+        #property_taxes.rename(columns = {'index':'year'})
+
+    if "salePrice" in endpoints:
+        property_comps = data['salePrice']
+        #comps_df = pd.DataFrame.from_dict(property_comps['listings'])
+        #comps_df.drop('id', axis=1, inplace=True)
+
+    if "rentalPrice" in endpoints:
+        property_rent = data['rentalPrice']
+        #rent_df = pd.DataFrame.from_dict(property_rent['listings'])
+        #rent_df.drop('id', axis=1, inplace=True)    
+    return last_request, property_data, property_comps, property_rent
+
+def map_plot(df, street):
+    """ 
+        Does: generates a map with the locations of the comparables\n
+        Arguments: \n
+            df: dataframe with the listing of the comparables\n
+            street: address of the house\n
+    """
+    fig = px.scatter_mapbox(df, 
+                        lat="latitude", 
+                        lon="longitude",     
+                        color="address", 
+                        color_continuous_scale=px.colors.cyclical.IceFire, 
+                        size="squareFootage",
+                        size_max=30, 
+                        zoom=15,
+                        hover_name="address",
+                        hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"],
+                        title="Comparables for {0}".format(street))
+    fig.update_layout(mapbox_style="open-street-map")                    
+    return fig
+
+def scatter_plot(df, street):
+    """ 
+        Does: generates a scatter plot with the price square feet relation of the comparables\n
+        Arguments: \n
+            df: dataframe with the listing of the comparables\n
+            street: address of the house\n
+    """
+    fig = px.scatter(df,
+                    x='squareFootage',
+                    y='price',
+                    hover_name="address",
+                    hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"],
+                    title="Comparables for {0}".format(street))
+    return(fig)
+
+def map_plot_property(df):
+    """ 
+        Does: generates a map with the locations of the comparables\n
+        Arguments: \n
+            df: dataframe with the listing of the comparables\n
+            street: address of the house\n
+    """
+    fig = px.scatter_mapbox(df, 
+                        lat="latitude", 
+                        lon="longitude",
+                        color_continuous_scale=px.colors.cyclical.IceFire, 
+                        size="squareFootage",
+                        size_max=30, 
+                        zoom=15,
+                        hover_name="address",
+                        title="Location")
+    fig.update_layout(mapbox_style="open-street-map")                    
+    return fig
+
+
+def main():
+    """ 
+        Does: only for testing purpose
+        Arguments: 
+            Option: load or save
+    """
+    endpoints = []
+    address = {}
+    location = 'local'
+    last_request, property_data, property_comps, property_rent = process_data(location, address, endpoints)
+    print(last_request)
+    
+if __name__ == "__main__":
+    main()

@@ -43,7 +43,7 @@ Once you have Python installed follow hte next steps to create a virtual envirom
 
 * Enable developers features like debugging:
     
-        export FLASK_ENV=openingdoors.py
+        export FLASK_ENV=development
 
 * Run the application:
     

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Opening Doors{% endblock %}
+
+{% block content %}
+        <div class="row" id="property-details">
+                <div class="eight columns"><h6>{{property_data.addressLine1}}</h6></div>
+                <div class="four  columns"></div>
+        </div>
+        <div class="row" id="property-details">
+                <div class="eight columns">{{property_data.city}}, {{property_data.state}} {{property_data.zipCode}}</div>
+                <div class="four  columns"></div>
+        </div>
+        <div class="row" id="property-details">
+                <div class="eight columns">{{property_data.bedrooms}} Beds  {{property_data.bathrooms}} Baths  {{property_data.squareFootage}} sqft</div>
+                <div class="four  columns"></div>
+        </div>
+        <div class="Property-Map">
+
+        </div>
+        <div class="Home-Details">
+
+        </div>
+        <div class="Tax-TaxAssessment">
+
+        </div>
+        <div class="Comparables">
+                <div class="map"></div>
+                <div class="comparable-list"></div>
+        </div>
+{% endblock %}
+{% block chart %}
+{% endblock %}
