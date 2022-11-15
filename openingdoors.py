@@ -18,6 +18,7 @@ from api_key import key_exist
 from api_key import save_key
 
 from model import process_data
+from model import map_plot_property
 from model import map_plot
 
 
@@ -64,12 +65,12 @@ def property_details(address):
             _location = ""
             _address = address #transform the address to the correct format
             _endpoints = [] # get from the check box in the html
-            last_request, property_data, property_comps, property_rent = process_data(_location,_address,_endpoints)
-            df_prop = pd.DataFrame.from_dict(property_data)
-            property_map = map_plot(df_prop,property_data['addressLine1'])
+
+            last_request, property_data, property_comps, property_rent, property_map = process_data(_location,_address,_endpoints)
+
             return render_template("property_details.html", last_request=last_request, 
                                     property_data=property_data, property_comps=property_comps, 
-                                    property_rent=property_rent)
+                                    property_rent=property_rent, property_map=property_map)
         except IndexError:
             abort(404)
         except KeyError:

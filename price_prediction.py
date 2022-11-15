@@ -139,21 +139,12 @@ def main():
     location = ""
     address = {} #transform the address to the correct format
     endpoints = [] # get from the check box in the html 
-    last_request, property_data, property_comps, property_rent = process_data(location, address, endpoints)
+    last_request, property_data, property_comps, property_rent, property_map = process_data(location, address, endpoints)
 
-    street = property_data['formattedAddress']
     #relational_plots(comps_df, street).show()
     #Distribution_plot(comps_df)
     #multiplot(comps_df)
-    coordinates = {
-                'latitude' : [property_data['latitude']],
-                'longitude' : [property_data['longitude']],
-                'address' : [property_data['addressLine1']],
-                'squareFootage' : [property_data['squareFootage']] 
-                }
-    df = pd.DataFrame.from_dict(coordinates)
-    fig = map_plot_property(df)
-    fig.show()
+
 
 if __name__ == '__main__':
     main()

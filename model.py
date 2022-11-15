@@ -13,6 +13,7 @@ import requests
 import plotly.express as px
 
 # data manipulation
+import pandas as pd
 import json
 
 # dotenv handling
@@ -131,8 +132,6 @@ def get_data(location, address, endpoints):
         data = get_api_data(address, endpoints)
     else:
         data = load_local_data('home.json')
-    #map_plot(df_sale_comps, street)
-    #scatter_plot(df_sale_comps, street)
     return data
 
 def process_data(location, address, endpoints):
@@ -155,14 +154,6 @@ def process_data(location, address, endpoints):
         last_request = data['last_request']['date_time']
         property_data = data['properties']
 
-        #property_tax_assessment = pd.DataFrame.from_dict(property_data["taxAssessment"],orient='index',)
-        #property_tax_assessment.reset_index(inplace=True)
-        #property_tax_assessment.rename(columns = {'index':'year'})
-
-        #property_taxes = pd.DataFrame.from_dict(property_data["propertyTaxes"],orient='index')
-        #property_taxes.reset_index(inplace=True)
-        #property_taxes.rename(columns = {'index':'year'})
-
     if "salePrice" in endpoints:
         property_comps = data['salePrice']
         #comps_df = pd.DataFrame.from_dict(property_comps['listings'])
@@ -171,15 +162,25 @@ def process_data(location, address, endpoints):
     if "rentalPrice" in endpoints:
         property_rent = data['rentalPrice']
         #rent_df = pd.DataFrame.from_dict(property_rent['listings'])
-        #rent_df.drop('id', axis=1, inplace=True)    
-    return last_request, property_data, property_comps, property_rent
+        #rent_df.drop('id', axis=1, inplace=True)
 
-def map_plot(df, street):
+    coordinates = {
+                    'latitude' : [property_data['latitude']],
+                    'longitude' : [property_data['longitude']],
+                    'address' : [property_data['addressLine1']],
+                    'squareFootage' : [property_data['squareFootage']]
+                    }
+    df_coordinates = pd.DataFrame.from_dict(coordinates)
+    property_map = map_plot_property(df_coordinates)
+
+
+    return last_request, property_data, property_comps, property_rent, property_map
+
+def map_plot(df):
     """ 
         Does: generates a map with the locations of the comparables\n
         Arguments: \n
             df: dataframe with the listing of the comparables\n
-            street: address of the house\n
     """
     fig = px.scatter_mapbox(df, 
                         lat="latitude", 
@@ -190,32 +191,31 @@ def map_plot(df, street):
                         size_max=30, 
                         zoom=15,
                         hover_name="address",
-                        hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"],
-                        title="Comparables for {0}".format(street))
+                        hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "daysOld"]
+                        )
     fig.update_layout(mapbox_style="open-street-map")                    
     return fig
 
-def scatter_plot(df, street):
+def scatter_plot(df, field):
     """ 
         Does: generates a scatter plot with the price square feet relation of the comparables\n
         Arguments: \n
             df: dataframe with the listing of the comparables\n
-            street: address of the house\n
+            field: x value\n
     """
     fig = px.scatter(df,
-                    x='squareFootage',
+                    x = field,
                     y='price',
                     hover_name="address",
-                    hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"],
-                    title="Comparables for {0}".format(street))
+                    hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"]
+                    )
     return(fig)
 
 def map_plot_property(df):
     """ 
-        Does: generates a map with the locations of the comparables\n
+        Does: generates a map with the location of the propety\n
         Arguments: \n
             df: dataframe with the listing of the comparables\n
-            street: address of the house\n
     """
     fig = px.scatter_mapbox(df, 
                         lat="latitude", 
@@ -224,8 +224,7 @@ def map_plot_property(df):
                         size="squareFootage",
                         size_max=30, 
                         zoom=15,
-                        hover_name="address",
-                        title="Location")
+                        hover_name="address")
     fig.update_layout(mapbox_style="open-street-map")                    
     return fig
 
@@ -239,8 +238,48 @@ def main():
     endpoints = []
     address = {}
     location = 'local'
-    last_request, property_data, property_comps, property_rent = process_data(location, address, endpoints)
-    print(last_request)
+    last_request, property_data, property_comps, property_rent, property_map = process_data(location, address, endpoints)
+
+    if 'features' in property_data:
+        features_df = pd.DataFrame.from_dict(property_data['features'])
+        property_data.pop('features')
+
+    if 'taxAssessment' in property_data:
+        tax_assessment_df = pd.DataFrame.from_dict(property_data['taxAssessment'],orient='index')
+        tax_assessment_df.reset_index(inplace=True)
+        tax_assessment_df.rename(columns = {'index':'year'})
+        property_data.pop('taxAssessment')
+
+    if 'propertyTaxes' in property_data:
+        taxes_df = pd.DataFrame.from_dict(property_data['propertyTaxes'],orient='index')
+        taxes_df.reset_index(inplace=True)
+        taxes_df.rename(columns = {'index':'year'})
+        property_data.pop('propertyTaxes')
+
+    if 'owner' in property_data:
+        owner_dict = property_data['owner']
+        property_data.pop('owner')
+
+    home_df = pd.DataFrame()
+    sale_df = pd.DataFrame()
+    rent_df = pd.DataFrame()
+
+    if len(property_comps) > 0:
+        for i in range(3):
+            property_data[(list(property_comps)[i])] = property_comps[(list(property_comps)[i])]
+        sale_df = pd.DataFrame.from_dict(property_comps['listings'])
+        sale_df.drop('id', axis=1, inplace=True)
+
+    if len(property_rent) > 0:
+        for i in range(3):
+            property_data[(list(property_rent)[i])] = property_rent[(list(property_rent)[i])]
+        rent_df = pd.DataFrame.from_dict(property_rent['listings'])
+        rent_df.drop('id', axis=1, inplace=True)
+        
+    for items in property_data.keys():
+        home_df[items] = [property_data[items]]
+    
+
     
 if __name__ == "__main__":
     main()
