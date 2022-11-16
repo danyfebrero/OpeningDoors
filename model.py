@@ -11,6 +11,8 @@ import requests
 
 # plotting
 import plotly.express as px
+import plotly.figure_factory as ff
+import plotly.graph_objs as go
 
 # data manipulation
 import pandas as pd
@@ -164,12 +166,17 @@ def process_data(address):
         tax_assessment_df.reset_index(inplace=True)
         tax_assessment_df.rename(columns = {'index':'year'})
         property_data.pop('taxAssessment')
+        #change the index name
+        #create a total column
+        #change the format to dollars
 
     if 'propertyTaxes' in property_data:
         taxes_df = pd.DataFrame.from_dict(property_data['propertyTaxes'],orient='index')  # return this
         taxes_df.reset_index(inplace=True)
         taxes_df.rename(columns = {'index':'year'})
         property_data.pop('propertyTaxes')
+        #change the index name
+        #change the format to dollars
 
     if 'owner' in property_data:
         house_owner = property_data['owner'] # return this
@@ -228,7 +235,7 @@ def map_plot_property(df):
     """ 
         Does: generates a map with the location of the propety\n
         Arguments: \n
-            df: dataframe with the listing of the comparables\n
+            df: dataframe with house data\n
     """
     fig = px.scatter_mapbox(df,
                         lat="latitude",
@@ -262,6 +269,29 @@ def load_states():
     states = list(df_fix['abbr'])
     return states
 
+def plotly_tables(df):
+    fig =  ff.create_table(df)
+    return fig
+
+def tables_graphs(df):
+    fig = ff.create_table(df, height_constant=60)
+    fig.add_trace(go.Scatter(x=teams, y=GFPG,
+                    marker=dict(color='#0099ff'),
+                    name='Goals For<br>Per Game',
+                    xaxis='x2', yaxis='y2'))
+    fig.add_trace(go.Scatter(x=teams, y=GAPG,
+                    marker=dict(color='#404040'),
+                    name='Goals Against<br>Per Game',
+                    xaxis='x2', yaxis='y2'))
+
+    fig.update_layout(
+                        title_text = '2016 Hockey Stats',
+                        margin = {'t':50, 'b':100},
+                        xaxis = {'domain': [0, .5]},
+                        xaxis2 = {'domain': [0.6, 1.]},
+                        yaxis2 = {'anchor': 'x2', 'title': 'Goals'}
+                    )
+    return fig
 
 def main():
     """ 
@@ -270,8 +300,11 @@ def main():
             Option: load or save
     """
     address = {}
-    house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner = process_data(address)
+    house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner, last_request = process_data(address)
     #map_plot_property(house_df).show()
     #map_plot(sale_df).show()
+    plotly_tables(tax_assessment_df).show()
+    plotly_tables(taxes_df).show()
+
 if __name__ == "__main__":
     main()

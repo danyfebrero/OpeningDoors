@@ -6,6 +6,8 @@ Created on Fri Oct 21 23:22:00 2022
 @author: Daniel Jimenez
 """
 import pandas as pd
+import json
+import plotly
 
 from flask import Flask
 from flask import render_template
@@ -70,11 +72,17 @@ def property_details(address):
         house['price']= "${:,.2f}".format(house['price'])
         date = str(last_request).split(" ")
         date= date[0]
-
-        return render_template("property_details.html", house_df=house, sale_df=sale_df,
-                                tax_assessment_df=tax_assessment_df,
-                                taxes_df=taxes_df, house_features=house_features,
-                                house_owner=house_owner, last_request = date)
+        house_map = map_plot_property(house_df)
+        comparables_map =map_plot(sale_df)
+        
+        graph1 = json.dumps(house_map, cls=plotly.utils.PlotlyJSONEncoder)
+        graph2 = json.dumps(comparables_map, cls=plotly.utils.PlotlyJSONEncoder)
+        #create the 3 tables with plotly
+        return render_template("property_details.html", house_df=house,
+                                sale_table = [sale_df.to_html(classes='data', justify="center",index_names=False, columns=['address','distance','propertyType','price','bedrooms','bathrooms','squareFootage','lotSize'])], sale_titles = [sale_df.columns.values],
+                                tables =[tax_assessment_df.to_html(classes='data', justify="center", index=False), taxes_df.to_html(classes='data',index=False)],
+                                house_features=house_features, house_owner=house_owner,
+                                last_request=date, graph1=graph1, graph2=graph2)
     except IndexError:
             abort(404)
     except KeyError:

@@ -13,23 +13,83 @@
                 </div>
         </div>
         <hr />
+        <h4>Map</h4>
         <div class="property-map" id="property-map">
-                <h4>Map</h4>
+                
+  
         </div>
+        <hr />
         <div class="Home-Details">
-
+                <h4>Home Details:</h4>
+                <ul>
+                        <li>Year of Built: {{house_df.yearBuilt}}</li>
+                        <li>Lot Size: {{house_df.lotSize}}</li>
+                        <li>Property Type: {{house_df.propertyType}}</li>
+                        <li>Features:
+                          <ul>
+                                <li>Architecture Type: {{house_features.architectureType}}</li>
+                                <li>Cooling: {{house_features.cooling}}</li>
+                                <li>Cooling Type: {{house_features.coolingType}}</li>
+                                <li>Exterior Type: {{house_features.exteriorType}}</li>
+                                <li>Floor Count: {{house_features.floorCount}}</li>
+                                <li>Foundation Type: {{house_features.foundationType}}</li>
+                                <li>Garage: {{house_features.garage}}</li>
+                                <li>Garage Type: {{house_features.garageType}}</li>
+                                <li>Heating: {{house_features.heating}}</li>
+                                <li>Heating Type: {{house_features.heatingType}}</li>
+                                <li>Pool: {{house_features.pool}}</li>
+                                <li>Roof Type: {{house_features.roofType}}</li>
+                                <li>Room Count: {{house_features.roomCount}}</li>
+                                <li>Unit Count: {{house_features.unitCount}}</li>
+                          </ul>
+                        </li>
+                      </ul>
         </div>
+        <hr />
         <div class="Tax-TaxAssessment">
-
+                <h4>Property Taxes and Assessment</h4>
+                <div>
+                        {% for table in tables %}
+                        {{ table|safe }}
+                        {% endfor %}
+                </div>
+                <div>
+                        <table></table>
+                </div>
         </div>
+        
+        <hr />
         <div class="Comparables">
-                <div class="map">
+                <h4>Comparables for: {{house_df.addressLine1}}</h4>
+                <div class="comparables-map" id="comparables-map">
 
                 </div>
                 <div class="comparable-list">
-                        
+                        {% for table in sale_table %}
+                                {{ table|safe }}
+                        {% endfor %}
                 </div>
         </div>
+        <hr />
+        <div class="owner">
+                <h4>Owner information:</h4>
+                <div class="owner">
+                        {% for name in  house_owner.names%}
+                        <b>Owners:</b>  {{name}}
+                        {% endfor %}
+                        <br> <b>Mailing Address:</b>  {{house_owner.mailingAddress.addressLine1}}, {{house_owner.mailingAddress.city}}, {{house_owner.mailingAddress.state}} {{house_owner.mailingAddress.zipCode}}
+                </div>
+                <br>
+        </div>
+
 {% endblock %}
 {% block chart %}
+  <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+  <script type='text/javascript'>
+    var graph1 = {{ graph1 | safe }};
+    Plotly.plot('property-map', graph1, {});
+
+    var graph2 = {{ graph2 | safe }};
+    Plotly.plot('comparables-map', graph2, {});
+  </script>
 {% endblock %}
