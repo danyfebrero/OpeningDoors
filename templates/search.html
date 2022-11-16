@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Opening Doors{% endblock %}
+
+{% block content %}
+<section class="header">
+        {% if key_exist == "True" %}
+        
+        <div class="search">
+            <p>Introduce desired address: </p>
+            <form method="post">
+                <div class="user_input">
+                    <div>
+                        <label for="street">Number and street:</label>
+                        <input class="u-full-width" type="text" id="street" name="address_input" placeholder="Number and street here">
+                        <label for="city">City:</label>
+                        <input type="text" id="city" name="city_input" placeholder="City">
+                        <label for="state">State:</label>
+                        <select id="state" name="state_input" >
+                            <option value=""></option>
+                            <!-- For loop logic of jinja template -->
+                            {%for i in range(0, len)%}
+                                <option value={{states[i]}}>{{states[i]}}</option>
+                            {%endfor%}
+                        </select>
+                        <label for="zipcode">Zipcode:</label>
+                        <input type="text" id="zipcode" name="zipcode_input" placeholder="Zipcode">
+                        <div>
+                            <button class="button-primary u-full-width" type="submit">Search</button>
+                        </div>
+                        <p>You alredy have an API key, but if you want to use another one,  
+                            <a href="{{ url_for('api_key') }}">change it here.</a>
+                        </p>
+                    </div>
+                    
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <p>In order to use this application
+            <em>you need an API key</em>
+            from <a href="https://rapidapi.com/realtymole/api/realty-mole-property-api/pricing">Realty Mole Property.</a>
+        </p>
+    {% endif %}
+
+</section>
+
+ 
+{% endblock %}

@@ -36,31 +36,11 @@ Once you have Python installed follow hte next steps to create a virtual envirom
        pip instal -r requirements.txt
 
 ## How to run the project
-### For mac and linux:
- * Location of module containing the app:
 
-        export FLASK_APP=openingdoors.py
-
-* Enable developers features like debugging:
+* Type in the command line:
     
-        export FLASK_ENV=development
+        python run.py
 
-* Run the application:
-    
-        flask run
-
-### For windows:
-* Location of module containing the app:
-        
-        set FLASK_APP=openingdoors.py
-
-* Enable developers features like debugging:
-        
-        set FLASK_ENV=development
-
-* Run the application:
-    
-        flask run
 
 ## How to quit the project:
 

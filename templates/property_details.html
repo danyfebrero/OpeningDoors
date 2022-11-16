@@ -1,34 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Opening Doors{% endblock %}
-
 {% block content %}
-        <div class="search">
-                <form method="post">
-                        <div class="user_input">
-                                <div class="nine columns">
-                                        <input class="u-full-width" type="text" id="searchBar" name="address_input" placeholder="Type your address here">
-                                </div>
-                                <div class="three columns">
-                                        <button class="button-primary u-full-width" type="submit">Search</button>
-                                </div>
-                        </div>
-                </form>
-        </div>
-        <div class="row" id="property-details">
-                <div class="eight columns"><h4>{{property_data.addressLine1}}</h4><p>{{property_data.city}}, {{property_data.state}} {{property_data.zipCode}}</p></div>
-                <div class="four  columns"></div>
-        </div>
-        <div class="row" id="property-details">
-                <div class="eight columns"></div>
-                <div class="four  columns"></div>
-        </div>
-        <div class="row" id="property-details">
-                <div class="eight columns">{{property_data.bedrooms}} Beds  {{property_data.bathrooms}} Baths  {{property_data.squareFootage}} sqft</div>
-                <div class="four  columns"></div>
-        </div>
-        <div class="Property-Map">
 
+        <div class="row" id="property-details">
+                <div class="eight columns">
+                        <h5>{{house_df.formattedAddress}}</h5>
+                        <p>Bedrooms: {{house_df.bedrooms}} <br>Bathrooms: {{house_df.bathrooms}} <br>Sqft: {{house_df.squareFootage}}</p>
+                </div>
+                <div class="four  columns">
+                        <h5>{{house_df.price}}</h5>
+                        <p>Realty Mole Estimate<br>as {{last_request}}</p>
+                </div>
+        </div>
+        <hr />
+        <div class="property-map" id="property-map">
+                <h4>Map</h4>
         </div>
         <div class="Home-Details">
 
@@ -37,8 +23,12 @@
 
         </div>
         <div class="Comparables">
-                <div class="map"></div>
-                <div class="comparable-list"></div>
+                <div class="map">
+
+                </div>
+                <div class="comparable-list">
+                        
+                </div>
         </div>
 {% endblock %}
 {% block chart %}

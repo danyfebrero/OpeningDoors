@@ -16,26 +16,20 @@ from flask import url_for
 
 from api_key import key_exist
 from api_key import save_key
+from api_key import get_request_counter
 
 from model import process_data
 from model import map_plot_property
 from model import map_plot
-
+from model import load_states
 
 app = Flask(__name__)
 
 
-@app.route("/", methods=["GET", "POST"])
+
+@app.route("/")
 def index():
-    if request.method == "POST":
-        address = request.form['address_input']
-        return redirect(url_for('property_details',address=address))
-    else:
-        if key_exist():
-            _key_exist = "True"
-        else:
-            _key_exist = "False"
-        return render_template("index.html", key_exist=_key_exist)
+        return render_template("index.html")
 
 @app.route("/about/")
 def about():
@@ -49,33 +43,43 @@ def api_key():
         return redirect(url_for('index'))
     else:
         if key_exist():
-             _key_exist = "True"
+            _key_exist = "True"
+            call_counter = get_request_counter()
         else:
             _key_exist = "False"
-        return render_template("key.html", key_exist=_key_exist)
+        return render_template("key.html", key_exist=_key_exist, call_counter=call_counter)
 
-@app.route("/p/<string:address>", methods=["GET", "POST"])
-def property_details(address):
+@app.route("/search/", methods=["GET", "POST"])
+def search():
     if request.method == "POST":
-        address = request.form['address_input']
-        address = {}
-        return redirect(url_for('property_details', address=address))
+        address = {"address" : request.form['address_input'], "city" : request.form['city_input'],
+                        "state" : request.form['state_input'], "zipcode" : request.form['zipcode_input']}
+        return redirect(url_for('property_details',address=address))
     else:
-        try:
-            _location = ""
-            _address = address #transform the address to the correct format
-            _endpoints = [] # get from the check box in the html
+        if key_exist():
+            _key_exist = "True"
+            states = load_states()
+        return render_template("search.html",key_exist=_key_exist,len=len(states),states=states)
 
-            last_request, property_data, property_comps, property_rent, property_map = process_data(_location,_address,_endpoints)
+@app.route("/p/<string:address>")
+def property_details(address):
+    try:
+        house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner, last_request = process_data(address)
+        house = house_df.to_dict(orient="records")
+        house = house[0]
+        house['price']= "${:,.2f}".format(house['price'])
+        date = str(last_request).split(" ")
+        date= date[0]
 
-            return render_template("property_details.html", last_request=last_request, 
-                                    property_data=property_data, property_comps=property_comps, 
-                                    property_rent=property_rent, property_map=property_map)
-        except IndexError:
+        return render_template("property_details.html", house_df=house, sale_df=sale_df,
+                                tax_assessment_df=tax_assessment_df,
+                                taxes_df=taxes_df, house_features=house_features,
+                                house_owner=house_owner, last_request = date)
+    except IndexError:
             abort(404)
-        except KeyError:
-            if len(property_data) == 0: #check if the json has information
-                invalid_address = "True"
-            else:
-                invalid_address = "False"
-            return render_template("error.html",invalid_address=invalid_address)
+    except KeyError:
+        if len(house_df) == 0: #check if the json has information
+            invalid_address = "True"
+        else:
+            invalid_address = "False"
+        return render_template("error.html",invalid_address=invalid_address)

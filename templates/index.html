@@ -8,49 +8,12 @@
     <img class="u-full-width" src="/static/PuttachatKumkrong.jpg" alt="">
 </section>
 <div>
-    <div class="six columns">
-        <h3>Buy a home</h3>
-        <p>With over 1 million+ homes for sale available on the website, Opening Doors can match you with a house you will want to call home.</p>    
-    </div>
-    <div class="six columns">
-        <h3>Rent a home</h3>
-        <p>With filters and custom keyword search, Opening Doors can help you easily find a home or apartment for rent that you'll love.</p>    
-    </div>
-</div>
-<div>
     <div>
-        <div class="six columns">
-            <button>Buy</button>
-        </div>
-        <div class="six columns">
-            <button class="u-full-width">Rent</button>
-        </div>
+        <h3>Buy a home</h3>
+        <p>With over 1 million+ homes for sale available on the website, Opening Doors can match you with a house you will want to call home.</p> 
+        <button><a href="{{ url_for('search') }}"> Buy / Sell </a></button>   
     </div>
-</div>
 
-    {% if key_exist == "True" %}
-        <div class="search">
-            <form method="post">
-                <div class="user_input">
-                    <div class="nine columns">
-                        <input class="u-full-width" type="text" id="searchBar" name="address_input" placeholder="Type your address here">
-                        <p>You alredy have an API key, but if you want to use another one,  
-                            <a href="{{ url_for('api_key') }}">change it here.</a>
-                        </p>
-                    </div>
-                    <div class="three columns">
-                        <button class="button-primary u-full-width" type="submit">Search</button>
-                        
-                    </div>
-                </div>
-            </form>
-        </div>
-    {% else %}
-        <p>In order to use this application
-            <em>you need an API key</em>
-            from <a href="https://rapidapi.com/realtymole/api/realty-mole-property-api/pricing">Realty Mole Property.</a>
-        </p>
-    {% endif %}
-    
-    
+</div>
+        
 {% endblock %}

@@ -95,7 +95,7 @@ def load_local_data(filename):
         data = json.load(file) 
     return data
 
-def get_api_data(address, endpoints):
+def get_api_data(address):
     """
         Does: gets all the data from the api\n
         Arguments: 
@@ -106,6 +106,7 @@ def get_api_data(address, endpoints):
     """
     #refactor this code
     data = {}
+    endpoints = ['properties', 'salePrice']
     for endpoint in endpoints:
         url = create_url(endpoint, address['address'], address['city'], address['state'], address['zipcode'])
         response = api_request(url)
@@ -118,63 +119,75 @@ def get_api_data(address, endpoints):
         save_data(data, 'home.json')
     return data
 
-def get_data(location, address, endpoints):
+def get_data(address):
     """
         Does:
         Arguments:
         Returns:
     """
+    location = 'local' #to avoid api call bc i reached the max attemp for this month
     if location == 'api':
         if len(address) == 0:
-            address = {"address" : "5500 Grand Lake Dr", "city" : "San Antonio", "state" : "TX", "zipcode" : 78244}
-        if len(endpoints) == 0:
-            endpoints = ['properties', 'salePrice']
-        data = get_api_data(address, endpoints)
+            address = {"address" : "5500 Grand Lake Dr", "city" : "San Antonio",
+                        "state" : "state_input", "zipcode" : 78244}
+        data = get_api_data(address)
     else:
         data = load_local_data('home.json')
     return data
 
-def process_data(location, address, endpoints):
+def process_data(address):
     """
-        returns: last_request, property_data, property_comps, property_rent
+        returns: house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner
     """
-    data = get_data(location, address, endpoints)
-    endpoints = []
-    address = {}
-    location = 'local'
-    data = get_data(location, address, endpoints)
+    data = get_data(address)
 
-    endpoints = list(data.keys())
-    last_request = ''
+    tax_assessment_df = pd.DataFrame()
+    taxes_df = pd.DataFrame()
+    house_features = {}
+    house_owner = {}
     property_data = {}
     property_comps = {}
-    property_rent = {}
 
-    if "properties" in endpoints:
+    if "properties" in data:
         last_request = data['last_request']['date_time']
         property_data = data['properties']
 
-    if "salePrice" in endpoints:
+    if "salePrice" in data:
         property_comps = data['salePrice']
-        #comps_df = pd.DataFrame.from_dict(property_comps['listings'])
-        #comps_df.drop('id', axis=1, inplace=True)
 
-    if "rentalPrice" in endpoints:
-        property_rent = data['rentalPrice']
-        #rent_df = pd.DataFrame.from_dict(property_rent['listings'])
-        #rent_df.drop('id', axis=1, inplace=True)
+    if 'features' in property_data:
+        house_features = property_data['features'] # return this
+        property_data.pop('features')
 
-    coordinates = {
-                    'latitude' : [property_data['latitude']],
-                    'longitude' : [property_data['longitude']],
-                    'address' : [property_data['addressLine1']],
-                    'squareFootage' : [property_data['squareFootage']]
-                    }
-    df_coordinates = pd.DataFrame.from_dict(coordinates)
-    property_map = map_plot_property(df_coordinates)
+    if 'taxAssessment' in property_data:
+        tax_assessment_df = pd.DataFrame.from_dict(property_data['taxAssessment'],orient='index')  # return this
+        tax_assessment_df.reset_index(inplace=True)
+        tax_assessment_df.rename(columns = {'index':'year'})
+        property_data.pop('taxAssessment')
 
+    if 'propertyTaxes' in property_data:
+        taxes_df = pd.DataFrame.from_dict(property_data['propertyTaxes'],orient='index')  # return this
+        taxes_df.reset_index(inplace=True)
+        taxes_df.rename(columns = {'index':'year'})
+        property_data.pop('propertyTaxes')
 
-    return last_request, property_data, property_comps, property_rent, property_map
+    if 'owner' in property_data:
+        house_owner = property_data['owner'] # return this
+        property_data.pop('owner')
+
+    house_df = pd.DataFrame() # return this
+    sale_df = pd.DataFrame() # return this
+
+    if len(property_comps) > 0:
+        for i in range(3):
+            property_data[(list(property_comps)[i])] = property_comps[(list(property_comps)[i])]
+        sale_df = pd.DataFrame.from_dict(property_comps['listings'])
+        sale_df.drop('id', axis=1, inplace=True)
+        
+    for items in property_data.keys():
+        house_df[items] = [property_data[items]]
+
+    return house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner, last_request
 
 def map_plot(df):
     """ 
@@ -217,16 +230,37 @@ def map_plot_property(df):
         Arguments: \n
             df: dataframe with the listing of the comparables\n
     """
-    fig = px.scatter_mapbox(df, 
-                        lat="latitude", 
+    fig = px.scatter_mapbox(df,
+                        lat="latitude",
                         lon="longitude",
                         color_continuous_scale=px.colors.cyclical.IceFire, 
                         size="squareFootage",
-                        size_max=30, 
+                        size_max=30,
                         zoom=15,
-                        hover_name="address")
-    fig.update_layout(mapbox_style="open-street-map")                    
+                        hover_name="addressLine1")
+    fig.update_layout(mapbox_style="open-street-map")
     return fig
+
+def load_states():
+    tables = pd.read_html('states.html')
+    df = tables[0]
+    print(len(df))
+
+    df1 = df.iloc[:,[0,1,2]]
+    df1.drop('FIPS Code', axis=1, inplace=True)
+    df1.rename(columns = {'State':'state','Postal Abbr.':'abbr'},inplace=True)
+
+    df2 = df.iloc[:,[3,4,5]]
+    df2.drop('FIPS Code.1', axis=1, inplace=True)
+    df2.rename(columns = {'State.1':'state','Postal Abbr..1':'abbr'},inplace=True)
+
+
+    frames = [df1, df2]
+    df_fix = pd.concat(frames)
+    df_fix.reset_index(drop=True, inplace=True)
+    df_fix.dropna(inplace=True)
+    states = list(df_fix['abbr'])
+    return states
 
 
 def main():
@@ -235,51 +269,9 @@ def main():
         Arguments: 
             Option: load or save
     """
-    endpoints = []
     address = {}
-    location = 'local'
-    last_request, property_data, property_comps, property_rent, property_map = process_data(location, address, endpoints)
-
-    if 'features' in property_data:
-        features_df = pd.DataFrame.from_dict(property_data['features'])
-        property_data.pop('features')
-
-    if 'taxAssessment' in property_data:
-        tax_assessment_df = pd.DataFrame.from_dict(property_data['taxAssessment'],orient='index')
-        tax_assessment_df.reset_index(inplace=True)
-        tax_assessment_df.rename(columns = {'index':'year'})
-        property_data.pop('taxAssessment')
-
-    if 'propertyTaxes' in property_data:
-        taxes_df = pd.DataFrame.from_dict(property_data['propertyTaxes'],orient='index')
-        taxes_df.reset_index(inplace=True)
-        taxes_df.rename(columns = {'index':'year'})
-        property_data.pop('propertyTaxes')
-
-    if 'owner' in property_data:
-        owner_dict = property_data['owner']
-        property_data.pop('owner')
-
-    home_df = pd.DataFrame()
-    sale_df = pd.DataFrame()
-    rent_df = pd.DataFrame()
-
-    if len(property_comps) > 0:
-        for i in range(3):
-            property_data[(list(property_comps)[i])] = property_comps[(list(property_comps)[i])]
-        sale_df = pd.DataFrame.from_dict(property_comps['listings'])
-        sale_df.drop('id', axis=1, inplace=True)
-
-    if len(property_rent) > 0:
-        for i in range(3):
-            property_data[(list(property_rent)[i])] = property_rent[(list(property_rent)[i])]
-        rent_df = pd.DataFrame.from_dict(property_rent['listings'])
-        rent_df.drop('id', axis=1, inplace=True)
-        
-    for items in property_data.keys():
-        home_df[items] = [property_data[items]]
-    
-
-    
+    house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner = process_data(address)
+    #map_plot_property(house_df).show()
+    #map_plot(sale_df).show()
 if __name__ == "__main__":
     main()
