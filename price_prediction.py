@@ -24,7 +24,7 @@ from sklearn.metrics import r2_score as r2 # evaluation metric
 from model import process_data
 from model import map_plot_property
 
-def relational_plots(df, street):
+def relational_plots(df):
     fig, axes = plt.subplots(3, 2, figsize=(10, 10))
     fig.suptitle('Price Relation')
     sns.scatterplot(ax=axes[0, 0], data = df, x ="squareFootage", y ="price", hue ="formattedAddress", legend = False, edgecolor = 'b')
@@ -136,14 +136,14 @@ def multiplot(df):
 
 def main():
     sns.set_style('whitegrid') # plot style
-    location = ""
-    address = {} #transform the address to the correct format
-    endpoints = [] # get from the check box in the html 
-    last_request, property_data, property_comps, property_rent, property_map = process_data(location, address, endpoints)
 
-    #relational_plots(comps_df, street).show()
-    #Distribution_plot(comps_df)
-    #multiplot(comps_df)
+    address = {} #transform the address to the correct format
+
+    house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner, last_request = process_data(address)
+
+    relational_plots(sale_df).show()
+    #Distribution_plot(sale_df)
+    #multiplot(sale_df)
 
 
 if __name__ == '__main__':

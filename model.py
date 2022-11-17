@@ -17,6 +17,7 @@ import plotly.graph_objs as go
 # data manipulation
 import pandas as pd
 import json
+import math
 
 # dotenv handling
 from api_key import get_key
@@ -26,8 +27,7 @@ from api_key import increase_request_counter
 from datetime import datetime
 
 
-def create_url(endpoint, address, city, state, zipcode, squareFootage=None, 
-                bathrooms=None, bedrooms=None, propertyType=None, compCount=None, limit=None):
+def create_url(endpoint, full_address):
     """
         Does: takes a full address and makes a resquest url\n
         Arguments:\n
@@ -39,6 +39,11 @@ def create_url(endpoint, address, city, state, zipcode, squareFootage=None,
             limit : integer (The maximum number of listings to return, between 1 and 50. Defaults to 50 if not provided)\n
         Return: resquest url based in the desired endpoint
     """
+
+    address = full_address['address']
+    city = full_address['city']
+    state = full_address['state']
+    zipcode = full_address['zipcode']
     url = f"https://realty-mole-property-api.p.rapidapi.com/{endpoint}"
     headers = {
 	    "X-RapidAPI-Key": get_key(),
@@ -110,13 +115,14 @@ def get_api_data(address):
     data = {}
     endpoints = ['properties', 'salePrice']
     for endpoint in endpoints:
-        url = create_url(endpoint, address['address'], address['city'], address['state'], address['zipcode'])
+        url = create_url(endpoint, address)
         response = api_request(url)
-        if not endpoint == 'properties':
-            data[endpoint] = json.loads(response.text)
+        if endpoint == 'properties':
+            temp = json.loads(response.text)
+            data[endpoint] = temp[0]
         else:
-             temp = json.loads(response.text)
-             data[endpoint] = temp[0]
+            data[endpoint] = json.loads(response.text)
+             
         data['last_request'] = {'date_time':str(datetime.now())}
         save_data(data, 'home.json')
     return data
@@ -127,19 +133,15 @@ def get_data(address):
         Arguments:
         Returns:
     """
-    location = 'local' #to avoid api call bc i reached the max attemp for this month
-    if location == 'api':
-        if len(address) == 0:
-            address = {"address" : "5500 Grand Lake Dr", "city" : "San Antonio",
-                        "state" : "state_input", "zipcode" : 78244}
-        data = get_api_data(address)
+    if len(address['address']) == 0:
+        data = load_local_data('home.json')     
     else:
-        data = load_local_data('home.json')
+        data = get_api_data(address)
     return data
 
 def process_data(address):
     """
-        returns: house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner
+        returns: house_df, sale_df, taxes_df, house_features, house_owner, last_request
     """
     data = get_data(address)
 
@@ -164,19 +166,18 @@ def process_data(address):
     if 'taxAssessment' in property_data:
         tax_assessment_df = pd.DataFrame.from_dict(property_data['taxAssessment'],orient='index')  # return this
         tax_assessment_df.reset_index(inplace=True)
-        tax_assessment_df.rename(columns = {'index':'year'})
+        tax_assessment_df['total'] = tax_assessment_df.sum(axis=1)
+        tax_assessment_df['total']= tax_assessment_df['total'].apply(lambda x: "${:,.2f}".format(x))
+        tax_assessment_df.rename(columns = {'index':'year'},inplace=True)
         property_data.pop('taxAssessment')
-        #change the index name
-        #create a total column
-        #change the format to dollars
 
     if 'propertyTaxes' in property_data:
         taxes_df = pd.DataFrame.from_dict(property_data['propertyTaxes'],orient='index')  # return this
         taxes_df.reset_index(inplace=True)
-        taxes_df.rename(columns = {'index':'year'})
+        taxes_df.rename(columns = {'index':'year','total':'taxes'},inplace=True)
+        taxes_df['taxes']= taxes_df['taxes'].apply(lambda x: "${:,.2f}".format(x))
+        taxes_df['assessment'] = tax_assessment_df['total']
         property_data.pop('propertyTaxes')
-        #change the index name
-        #change the format to dollars
 
     if 'owner' in property_data:
         house_owner = property_data['owner'] # return this
@@ -190,11 +191,15 @@ def process_data(address):
             property_data[(list(property_comps)[i])] = property_comps[(list(property_comps)[i])]
         sale_df = pd.DataFrame.from_dict(property_comps['listings'])
         sale_df.drop('id', axis=1, inplace=True)
+        sale_df.fillna('',inplace=True)
+        sale_df['price']= sale_df['price'].apply(lambda x: "${:,.2f}".format(x))
+        sale_df['distance']= sale_df['distance'].apply(lambda x: round(x, 2))
+        
         
     for items in property_data.keys():
         house_df[items] = [property_data[items]]
 
-    return house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner, last_request
+    return house_df, sale_df, taxes_df, house_features, house_owner, last_request
 
 def map_plot(df):
     """ 
@@ -269,28 +274,17 @@ def load_states():
     states = list(df_fix['abbr'])
     return states
 
-def plotly_tables(df):
+def plot_tables(df):
     fig =  ff.create_table(df)
     return fig
 
-def tables_graphs(df):
-    fig = ff.create_table(df, height_constant=60)
-    fig.add_trace(go.Scatter(x=teams, y=GFPG,
-                    marker=dict(color='#0099ff'),
-                    name='Goals For<br>Per Game',
-                    xaxis='x2', yaxis='y2'))
-    fig.add_trace(go.Scatter(x=teams, y=GAPG,
-                    marker=dict(color='#404040'),
-                    name='Goals Against<br>Per Game',
-                    xaxis='x2', yaxis='y2'))
-
-    fig.update_layout(
-                        title_text = '2016 Hockey Stats',
-                        margin = {'t':50, 'b':100},
-                        xaxis = {'domain': [0, .5]},
-                        xaxis2 = {'domain': [0.6, 1.]},
-                        yaxis2 = {'anchor': 'x2', 'title': 'Goals'}
-                    )
+def basic_table(df):
+    fig = go.Figure(data=[go.Table(
+                                    header=dict(values=list(df.columns),
+                                                align='left'),
+                                    cells=dict(values=df.transpose().values.tolist(),
+                                                align='left'))
+                            ])
     return fig
 
 def main():
@@ -299,12 +293,14 @@ def main():
         Arguments: 
             Option: load or save
     """
-    address = {}
-    house_df, sale_df, tax_assessment_df, taxes_df, house_features, house_owner, last_request = process_data(address)
+    address = {"address" : "", "city" : "San Antonio",
+                    "state" : "state_input", "zipcode" : 78244}
+    #house_df, sale_df, taxes_df, house_features, house_owner, last_request = process_data(address)
     #map_plot_property(house_df).show()
     #map_plot(sale_df).show()
-    plotly_tables(tax_assessment_df).show()
-    plotly_tables(taxes_df).show()
+    #plotly_tables(taxes_df).show()
+    print(len(address['address']))
+
 
 if __name__ == "__main__":
     main()

@@ -48,10 +48,8 @@
         <hr />
         <div class="Tax-TaxAssessment">
                 <h4>Property Taxes and Assessment</h4>
-                <div>
-                        {% for table in tables %}
-                        {{ table|safe }}
-                        {% endfor %}
+                <div id="taxes-table">
+                        
                 </div>
                 <div>
                         <table></table>
@@ -64,10 +62,8 @@
                 <div class="comparables-map" id="comparables-map">
 
                 </div>
-                <div class="comparable-list">
-                        {% for table in sale_table %}
-                                {{ table|safe }}
-                        {% endfor %}
+                <div class="comparables_table" id="comparables_table">
+                       
                 </div>
         </div>
         <hr />
@@ -81,6 +77,7 @@
                 </div>
                 <br>
         </div>
+        <hr /><br>
 
 {% endblock %}
 {% block chart %}
@@ -91,5 +88,12 @@
 
     var graph2 = {{ graph2 | safe }};
     Plotly.plot('comparables-map', graph2, {});
+
+    var tax_table = {{ tax_table | safe }};
+    Plotly.plot('taxes-table', tax_table, {});
+
+    var comparables_table = {{ comparables_table | safe }};
+    Plotly.plot('comparables_table', comparables_table, {});
+
   </script>
 {% endblock %}
