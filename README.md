@@ -8,7 +8,7 @@ https://github.com/danyfebrero/OpeningDoors
 
 ## Project Brief
 
-This project will allow the user to search a home value, and analyze selling and rental options.
+This project will allow the user to search a home value, and analyze the comparables.
 
 ## Requirements:
   * python 3.9
