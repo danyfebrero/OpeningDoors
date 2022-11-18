@@ -130,9 +130,9 @@ def get_api_data(address):
 
 def get_data(address):
     """
-        Does:
-        Arguments:
-        Returns:
+        Does: retrieves the data from the api or the local drive\n
+        Arguments: address dictionary\n
+        Returns: json object\n
     """
     
     if len(address['address']) == 0:
@@ -143,7 +143,8 @@ def get_data(address):
 
 def process_data(address):
     """
-        returns: house_df, sale_df, taxes_df, house_features, house_owner, last_request
+        does: split and organize data. \n
+        returns: house_df, sale_df, taxes_df, house_features, house_owner, last_request\n
     """
     data = get_data(address)
 
@@ -242,6 +243,10 @@ def map_plot_property(df):
     return fig
 
 def load_states():
+    """
+        does: read a html file with that has the USA states and the abbreviations for them\n
+        return: dataframe with all the states and abbreviations\n
+    """
     tables = pd.read_html('states.html')
     df = tables[0]
     print(len(df))
@@ -263,10 +268,18 @@ def load_states():
     return states
 
 def plot_tables(df):
+    """
+        does: create table from a given dataframe\n
+        return: the table in a plotly fig object\n 
+    """
     fig =  ff.create_table(df)
     return fig
 
 def scatter_plot(df, x_column, y_column):
+    """
+        does: create scatter plot from a given dataframe\n
+        return: the table in a plotly express fig object\n 
+    """
     df['price'] = df['price'].apply(lambda x: x.replace(',', '').replace('$', ''))
     df['lotSize'] = df['lotSize'].replace('', np.nan, regex=True)
     fig = px.scatter(df, x = x_column, y = y_column,
@@ -279,14 +292,6 @@ def main():
         Arguments: 
             Option: load or save
     """
-    address = {"address" : "", "city" : "San Antonio",
-                    "state" : "state_input", "zipcode" : 78244}
-    #house_df, sale_df, taxes_df, house_features, house_owner, last_request = process_data(address)
-    #map_plot_property(house_df).show()
-    #map_plot(sale_df).show()
-    #plotly_tables(taxes_df).show()
-    #scatter_plot(sale_df,"squareFootage","price").show()
-
 
 if __name__ == "__main__":
     main()
