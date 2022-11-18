@@ -45,6 +45,8 @@ Once you have Python installed follow hte next steps to create a virtual envirom
     
         python run.py
 
+        and follow the link in showed in the terminal
+
 
 ## How to quit the project:
 
