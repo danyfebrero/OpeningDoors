@@ -18,6 +18,7 @@ import plotly.graph_objs as go
 import pandas as pd
 import json
 import math
+import numpy as np
 
 # dotenv handling
 from api_key import get_key
@@ -133,6 +134,7 @@ def get_data(address):
         Arguments:
         Returns:
     """
+    
     if len(address['address']) == 0:
         data = load_local_data('home.json')     
     else:
@@ -221,20 +223,6 @@ def map_plot(df):
     fig.update_layout(mapbox_style="open-street-map")                    
     return fig
 
-def scatter_plot(df, field):
-    """ 
-        Does: generates a scatter plot with the price square feet relation of the comparables\n
-        Arguments: \n
-            df: dataframe with the listing of the comparables\n
-            field: x value\n
-    """
-    fig = px.scatter(df,
-                    x = field,
-                    y='price',
-                    hover_name="address",
-                    hover_data=["propertyType", "bedrooms", "bathrooms", "squareFootage", "correlation", "price", "distance", "daysOld"]
-                    )
-    return(fig)
 
 def map_plot_property(df):
     """ 
@@ -278,14 +266,12 @@ def plot_tables(df):
     fig =  ff.create_table(df)
     return fig
 
-def basic_table(df):
-    fig = go.Figure(data=[go.Table(
-                                    header=dict(values=list(df.columns),
-                                                align='left'),
-                                    cells=dict(values=df.transpose().values.tolist(),
-                                                align='left'))
-                            ])
-    return fig
+def scatter_plot(df, x_column, y_column):
+    df['price'] = df['price'].apply(lambda x: x.replace(',', '').replace('$', ''))
+    df['lotSize'] = df['lotSize'].replace('', np.nan, regex=True)
+    fig = px.scatter(df, x = x_column, y = y_column,
+                    color="address", hover_data=["correlation","distance","bedrooms","bathrooms","propertyType","squareFootage","lotSize"],height=400,width=600)
+    return(fig)
 
 def main():
     """ 
@@ -299,7 +285,7 @@ def main():
     #map_plot_property(house_df).show()
     #map_plot(sale_df).show()
     #plotly_tables(taxes_df).show()
-    print(len(address['address']))
+    #scatter_plot(sale_df,"squareFootage","price").show()
 
 
 if __name__ == "__main__":

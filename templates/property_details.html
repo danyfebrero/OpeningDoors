@@ -78,6 +78,15 @@
                 <br>
         </div>
         <hr /><br>
+        <div class="Data-Analysis">
+                <h4>Exploratory Data Analysis</h4>
+                <div class="sqrt_fig" id="sqrt_fig"></div>
+                <div class="bed_fig" id="bed_fig"></div>
+                <div class="bath_fig" id="bath_fig"></div>
+                <div class="ptype_fig" id="ptype_fig"></div>
+                <div class="lotSize_fig" id="lotSize_fig"></div>
+        </div>
+        <hr />
 
 {% endblock %}
 {% block chart %}
@@ -94,6 +103,21 @@
 
     var comparables_table = {{ comparables_table | safe }};
     Plotly.plot('comparables_table', comparables_table, {});
+
+    var sqrt_fig = {{ sqrt_fig | safe }};
+    Plotly.plot('sqrt_fig', sqrt_fig, {});
+
+    var bed_fig = {{ bed_fig | safe }};
+    Plotly.plot('bed_fig', bed_fig, {});
+
+    var bath_fig = {{ bath_fig | safe }};
+    Plotly.plot('bath_fig', bath_fig, {});
+
+    var ptype_fig = {{ ptype_fig | safe }};
+    Plotly.plot('ptype_fig', ptype_fig, {});
+
+    var lotSize_fig = {{ lotSize_fig | safe }};
+    Plotly.plot('lotSize_fig', lotSize_fig, {});
 
   </script>
 {% endblock %}

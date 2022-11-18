@@ -25,6 +25,7 @@ from model import map_plot_property
 from model import map_plot
 from model import plot_tables
 from model import load_states
+from model import scatter_plot
 
 app = Flask(__name__)
 
@@ -77,6 +78,12 @@ def property_details():
         house_map = map_plot_property(house_df)
         comparables_map =map_plot(sale_df)
         taxes_fig = plot_tables(taxes_df)
+        sqrt_scatter = scatter_plot(sale_df,"squareFootage","price")
+        bed_scatter = scatter_plot(sale_df,"bedrooms","price")
+        bath_scatter = scatter_plot(sale_df,"bathrooms","price")
+        ptype_scatter = scatter_plot(sale_df,"propertyType","price")
+        lotSize_scatter = scatter_plot(sale_df,"lotSize","price")
+
         df = sale_df[['address','distance','propertyType','price','bedrooms','bathrooms','squareFootage','lotSize']]
         df.rename(columns = {'address':'Address','distance':'Distance',
                             'propertyType':'Property Type', 'price':'Price',
@@ -88,7 +95,11 @@ def property_details():
         graph2 = json.dumps(comparables_map, cls=plotly.utils.PlotlyJSONEncoder)
         tax_table = json.dumps(taxes_fig, cls=plotly.utils.PlotlyJSONEncoder)
         comparables_table = json.dumps(comparables_fig, cls=plotly.utils.PlotlyJSONEncoder)
-        #create the 3 tables with plotly
+        sqrt_fig = json.dumps(sqrt_scatter, cls=plotly.utils.PlotlyJSONEncoder)
+        bed_fig = json.dumps(bed_scatter, cls=plotly.utils.PlotlyJSONEncoder)
+        bath_fig = json.dumps(bath_scatter, cls=plotly.utils.PlotlyJSONEncoder)
+        ptype_fig = json.dumps(ptype_scatter, cls=plotly.utils.PlotlyJSONEncoder)
+        lotSize_fig = json.dumps(lotSize_scatter, cls=plotly.utils.PlotlyJSONEncoder)
         return render_template("property_details.html", house_df=house,
                                 house_features=house_features,
                                 house_owner=house_owner,
@@ -96,7 +107,11 @@ def property_details():
                                 graph1=graph1,
                                 tax_table = tax_table,
                                 graph2=graph2,
-                                comparables_table = comparables_table)
+                                comparables_table = comparables_table,
+                                sqrt_fig=sqrt_fig,bed_fig=bed_fig,
+                                bath_fig=bath_fig, ptype_fig=ptype_fig,
+                                lotSize_fig=lotSize_fig
+                                )
     except IndexError:
             abort(404)
     except KeyError:
